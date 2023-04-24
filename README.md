@@ -1,6 +1,24 @@
 # WifiKeySaver
 
-WifiKeySaver es un script de shell de Linux que permite guardar las contraseñas de redes Wi-Fi en un archivo de texto. A continuación se describe el funcionamiento general del script:
+WifiKeySaver es un script de shell de Linux que permite guardar las contraseñas de redes Wi-Fi en un archivo de texto.
+
+## Uso
+
+Para usar WifiKeySaver, sigue los siguientes pasos:
+
+1. Descarga el script de WifiKeySaver desde https://github.com/Rootuser47363/WifiKeySaver/
+2. Abre una terminal en tu sistema Linux y navega hasta la ubicación donde descargaste el archivo de script.
+3. Ejecuta el script con el siguiente comando:
+
+   ```
+   bash WifiKeySaver.sh
+   ```
+
+4. Sigue las instrucciones que aparecen en pantalla para guardar las contraseñas de Wi-Fi.
+
+## Funcionamiento del script
+
+El script funciona de la siguiente manera:
 
 1. El script comienza imprimiendo un encabezado que indica su nombre y versión, así como el nombre del creador y el enlace a su perfil de GitHub.
 
@@ -16,4 +34,20 @@ WifiKeySaver es un script de shell de Linux que permite guardar las contraseñas
 
 7. Finalmente, el script escribe todas las contraseñas en el archivo de salida especificado.
 
-El script está escrito en Bash, un lenguaje de programación de shell de Unix/Linux. Puede ser ejecutado en cualquier terminal de Linux que tenga Bash instalado.
+## Actualizaciones del código
+
+Aquí están las actualizaciones del código de WifiKeySaver:
+
+- Se agregó una comprobación al principio del script para verificar si el usuario tiene permisos de superusuario. Si no los tiene, se solicita que se ejecute el script como superusuario.
+
+- Se agregó una opción para mostrar las contraseñas guardadas en la pantalla antes de guardarlas en el archivo de salida.
+
+- Se agregó una opción para ordenar las contraseñas por tipo de seguridad de red (WEP, WPA, etc.).
+
+- Se agregó una opción para mostrar solo las contraseñas de redes Wi-Fi a las que se ha conectado el usuario.
+
+- Se corrigió un error que hacía que el script guardara las contraseñas en un archivo de salida sin extensiones.
+
+- Se mejoró la legibilidad y la claridad del código.
+
+¡Gracias por utilizar WifiKeySaver! Si tienes alguna pregunta o comentario, no dudes en ponerte en contacto conmigo a través de mi perfil de GitHub.
