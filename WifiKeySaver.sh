@@ -7,48 +7,93 @@ echo "# Creado por Rootuser47363 #"
 echo "# https://github.com/Rootuser47363 #"
 echo "####################################"
 
+# Función para instalar dependencias
+install_deps() {
+    echo "Instalando dependencias..."
+    if [ -f /etc/debian_version ]; then
+        # Debian, Ubuntu
+        sudo apt-get update
+        sudo apt-get install -y sudo nmcli sed sort echo
+    elif [ -f /etc/redhat-release ]; then
+        # Red Hat, CentOS, Fedora
+        if grep -q "CentOS Linux release 8" /etc/redhat-release; then
+            sudo dnf update
+            sudo dnf install -y sudo nmcli sed sort echo
+        else
+            sudo yum update
+            sudo yum install -y sudo nmcli sed sort echo
+        fi
+    elif [ -f /etc/arch-release ]; then
+        # Arch Linux
+        sudo pacman -S sudo nmcli sed sort echo
+    elif grep -q "Kali" /etc/os-release; then
+        # Kali Linux
+        sudo apt-get update
+        sudo apt-get install -y sudo nmcli sed sort echo
+    elif grep -q "Parrot" /etc/os-release; then
+        # Parrot OS
+        sudo apt-get update
+        sudo apt-get install -y sudo nmcli sed sort echo
+    elif [ -f /etc/SuSE-release ] || [ -f /etc/SUSE-brand ] || [ -f /etc/SUSE-release ]; then
+        # SUSE Linux
+        sudo zypper refresh
+        sudo zypper install -y sudo nmcli sed sort echo
+    elif [ -f /etc/alpine-release ]; then
+        # Alpine Linux
+        sudo apk update
+        sudo apk add sudo nmcli sed sort echo
+    elif [ "$(uname)" == "Darwin" ]; then
+        # macOS
+        echo "No se pueden instalar las dependencias automáticamente en macOS. Por favor, instale manualmente las siguientes dependencias: sudo, nmcli, sed, sort, echo."
+        exit 1
+    else
+        echo "Error: No se pudo detectar el sistema operativo. Por favor, instale manualmente las siguientes dependencias: sudo, nmcli, sed, sort, echo."
+        exit 1
+    fi
+    echo "Las dependencias se han instalado correctamente."
+}
+
+# Verificar que el usuario tiene permisos de sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "Por favor, ejecute el script como usuario root o con permisos de sudo." >&2
+    exit 1
+fi
+
 # Verificar que el sistema operativo es Linux
 if [ "$(uname)" != "Linux" ]; then
     echo "Este script solo se puede ejecutar en un equipo con Linux." >&2
     exit 1
 fi
 
-# Cambiar el nombre del archivo de salida aquí:
-nombre_archivo="Auto-wifi.txt"
-
-# Verificar si el archivo de salida ya existe y pedir confirmación antes de sobrescribirlo
-if [ -f "$nombre_archivo" ]; then
-    read -p "El archivo $nombre_archivo ya existe. ¿Desea sobrescribirlo? (S/N) " confirmacion
-    if [ "$confirmacion" != "S" ]; then
-        echo "Operación cancelada."
-        exit 0
-    else
-        # Leer las contraseñas ya existentes en el archivo y guardarlas en una variable
-        contrasenas_existentes=$(cat $nombre_archivo)
-    fi
+# Instalar dependencias si no están instaladas
+if ! [ -x "$(command -v sudo)" ] || ! [ -x "$(command -v nmcli)" ] || ! [ -x "$(command -v sed)" ] || ! [ -x "$(command -v sort)" ] || ! [ -x "$(command -v echo)" ]; then
+    install_deps
 fi
 
-# Ejecutar el comando para obtener las contraseñas y guardarlas en una variable
-contrasenas_wifi=""
-while read -r red; do
-    nombre_red=$(echo "$red" | sed -n 's/^.*:\s\(.*\)$/\1/p')
-    contrasena_red=$(sudo cat "/etc/NetworkManager/system-connections/$nombre_red" | sed -n 's/^psk=\(.*\)$/\1/p')
-    if [ -n "$contrasena_red" ]; then
-        contrasenas_wifi+="\n$nombre_red: $contrasena_red"
-    fi
-done <<< "$(sudo nmcli --fields NAME con show)"
+# Cambiar el nombre del archivo de configuración de NetworkManager
+sudo mv /etc/NetworkManager/NetworkManager.conf /etc/NetworkManager/NetworkManager.conf.backup
+echo "Archivo de configuración de NetworkManager respaldado como /etc/NetworkManager/NetworkManager.conf.backup"
 
-# Combinar las contraseñas ya existentes con las nuevas, y ordenarlas alfabéticamente por nombre de red
-if [ -n "$contrasenas_existentes" ]; then
-    todas_contraseñas=$(echo -e "$contrasenas_existentes$contrasenas_wifi" | sort)
+# Obtener la lista de conexiones
+echo "Obteniendo la lista de conexiones..."
+connections=$(nmcli connection show | awk -F "  " '{print $1}' | sed '/^NAME/d' | sort)
+
+# Verificar si hay conexiones con el mismo nombre
+duplicate_connections=$(echo "$connections" | uniq -d)
+
+if [ -z "$duplicate_connections" ]; then
+  echo "No hay conexiones con el mismo nombre."
 else
-    todas_contraseñas=$(echo -e "$contrasenas_wifi" | sort)
+  echo "Las siguientes conexiones tienen el mismo nombre:"
+  echo "$duplicate_connections"
 fi
 
-# Escribir todas las contraseñas en el archivo de salida
-if echo -e "$todas_contraseñas" > "$nombre_archivo"; then
-    echo "Contraseñas guardadas exitosamente en $nombre_archivo"
-else
-    echo "Error al escribir en el archivo: $todas_contraseñas" >&2
-    exit 1
+# Cambiar el nombre de las conexiones duplicadas
+if [ -n "$duplicate_connections" ]; then
+  while read connection; do
+    echo "Cambiando el nombre de la conexión $connection"
+    nmcli connection modify "$connection" connection.id "$connection-duplicated"
+  done <<< "$duplicate_connections"
 fi
+
+echo "Proceso completado."
